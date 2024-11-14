@@ -1,4 +1,5 @@
 ﻿using System.Drawing;
+using System.Drawing.Printing;
 
 namespace noise_detector
 {
@@ -30,7 +31,7 @@ namespace noise_detector
         /// <param name="x"></param>
         /// <param name="y"></param>
         /// <param name="radius"></param>
-        public int AbsoluteNoiseValue(int x, int y, int radius)
+        public int AbsoluteNoiseValue(int x, int y, int radius, int plantTolerance)
         {
             if (x < 0 || y < 0 || x > Width || y > Height || radius<1)
                 return -1;
@@ -38,37 +39,64 @@ namespace noise_detector
             if (AbsoluteNoises[x, y]!=-1)
                 return AbsoluteNoises[x, y];
 
-            int sum = 0;
-            int upperBoundX = Math.Min(x + radius + 1, Width); 
-            int upperBoundY = Math.Min(y + radius + 1, Height);
-
+            int sum = 0; 
             Color centerPix = InitialImage.GetPixel(x, y);
 
-            for (int i = Math.Max(0, x - radius); i < upperBoundX; i++)
-                for (int j = Math.Max(0, y - radius); j < upperBoundY; j++)
-                {
-                    Color currentPix = InitialImage.GetPixel(i, j);
+            if (centerPix.G == 0 || centerPix.R > centerPix.G / plantTolerance || centerPix.B > centerPix.G / plantTolerance)
+            {
+                int upperBoundX = Math.Min(x + radius + 1, Width);
+                int upperBoundY = Math.Min(y + radius + 1, Height);
 
-                    sum += Math.Abs(currentPix.R - centerPix.R) 
-                        + Math.Abs(currentPix.G - centerPix.G) 
-                        + Math.Abs(currentPix.B - centerPix.B);
-                }
+                for (int i = Math.Max(0, x - radius); i < upperBoundX; i++)
+                    for (int j = Math.Max(0, y - radius); j < upperBoundY; j++)
+                    {
+                        Color currentPix = InitialImage.GetPixel(i, j);
 
-            sum /= (4 * radius + 4) * radius;
+                        sum += Math.Abs(currentPix.R - centerPix.R)
+                            + Math.Abs(currentPix.G - centerPix.G)
+                            + Math.Abs(currentPix.B - centerPix.B);
+                    }
+
+                sum /= (4 * radius + 4) * radius;
+            }
 
             AbsoluteNoises[x, y] = sum;
 
             return sum;
         }
 
-        /// <summary>
-        /// Uses AbsoluteNoiseValue on all cells
-        /// </summary>
-        public void FillAbsoluteNoises(int radius)
+        public int AverageAbsoluteNoise(int x1, int x2, int y1, int y2, int radius, int plantTolerance)
         {
-            for (int i = 0; i < Width; i++)
-                for (int j = 0; j < Height; j++)
-                    AbsoluteNoiseValue(i, j, radius);
+            int sum = 0;
+
+            x1 = Math.Max(0, x1);
+            y1 = Math.Max(0, y1);
+            x2 = Math.Min(Width, x2);
+            y2 = Math.Min(Height, y2);
+
+            for (int i = x1; i < x2; i++)
+                for (int j = y1; j < y2; j++)
+                    sum += AbsoluteNoiseValue(i, j, radius, plantTolerance);
+
+            return sum / Math.Abs((x1 - x2) * (y1 - y2));
+        }
+
+        public Bitmap AverageNoiseMap(int squareWidth, int squareHeight)
+        {
+            int tmpW = Width / squareWidth + Convert.ToInt32((Width % squareWidth) != 0);
+            int tmpH = Height / squareHeight + Convert.ToInt32(Height % squareHeight != 0);
+
+            Bitmap result = new Bitmap(tmpW, tmpH);
+
+            for(int i=0; i<tmpW; i++)
+                for(int j=0; j<tmpH; j++)
+                {
+                    int localNoise = AverageAbsoluteNoise(i * squareWidth, (i + 1) * squareWidth, 
+                        j * squareHeight, (j + 1) * squareHeight, 1, 1);
+                    result.SetPixel(i, j, Color.FromArgb(localNoise / 3, localNoise/3, localNoise/3));
+                }
+
+            return result;
         }
     }
 }
