@@ -20,7 +20,7 @@ namespace noise_detector
             Height = initialImage.Height;
 
             InitialImage = new BitmapProcessor().BitmapToArray(initialImage);
-            
+
             AbsoluteNoises = new int[Width, Height];
         }
 
@@ -60,7 +60,7 @@ namespace noise_detector
         }
 
         /// <summary>
-        /// Doesn't FILL absolutenoises
+        /// DOES FILL absolutenoises
         /// </summary>
         /// <param name="x1"></param>
         /// <param name="x2"></param>
@@ -80,19 +80,11 @@ namespace noise_detector
 
             for (int i = x1; i < x2; i++)
                 for (int j = y1; j < y2; j++)
-                    sum += AbsoluteNoises[i, j];
+                    sum += AbsoluteNoiseValue(i, j, radius, plantTolerance);
 
             return sum / Math.Abs((x1 - x2) * (y1 - y2));
         }
 
-        /// <summary>
-        /// Only call it after AbsoluteNoises was filled
-        /// </summary>
-        /// <param name="squareWidth"></param>
-        /// <param name="squareHeight"></param>
-        /// <param name="radius"></param>
-        /// <param name="plantTolerance"></param>
-        /// <returns></returns>
         public int[,] AverageNoiseMap(int squareWidth, int squareHeight, int radius, float plantTolerance)
         {
             int tmpW = Width / squareWidth + Convert.ToInt32(Width % squareWidth != 0);
