@@ -1,8 +1,6 @@
-﻿using noise_detector;
-using System;
-using System.Drawing;
+﻿using System.Drawing;
 
-namespace MyApp
+namespace noise_detector
 {
     internal class Program
     {
@@ -10,12 +8,25 @@ namespace MyApp
         {
             Console.WriteLine("Image path:");
             string path = Console.ReadLine();
-            
+
+            Console.WriteLine("Noise detect radius:");
+            int rad = Int32.Parse(Console.ReadLine());
+
+            Console.WriteLine("Plant tolerance:");
+            float pt = float.Parse(Console.ReadLine());
+
             NoiseMap myLittleNoiseMap = new NoiseMap(new Bitmap(path));
 
-            Bitmap result = myLittleNoiseMap.AverageNoiseMap(myLittleNoiseMap.Width / 100, myLittleNoiseMap.Width / 100);
+            BitmapProcessor btp = new BitmapProcessor();
 
-            result.Save("output.png");
+            myLittleNoiseMap.FillAbsoluteNoises(rad, pt);
+
+            Bitmap res1 = btp.HeightsToBitmap(myLittleNoiseMap.AverageNoiseMap(
+                myLittleNoiseMap.Width / 50, myLittleNoiseMap.Width / 50, rad, pt), 0.33f);
+            Bitmap res2 = btp.HeightsToBitmap(myLittleNoiseMap.AbsoluteNoises, 0.33f);
+
+            res1.Save("output1.png");
+            res2.Save("output2.png");
         }
     }
 }
