@@ -29,7 +29,11 @@ namespace noise_detector
             string[] images = Directory.GetFiles(path);
 
             for (int i = 0; i < images.Length; i++)
+            {
                 ProcessImage(images[i], savepath, rad, pt);
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+            }
 
             Console.WriteLine($"Work done. Results in {savepath}");
         }
@@ -40,8 +44,8 @@ namespace noise_detector
 
             BitmapProcessor btp = new BitmapProcessor();
 
-            Bitmap res1 = btp.HeightsToBitmap(myLittleNoiseMap.AverageNoiseMap(
-                myLittleNoiseMap.Width / 50, myLittleNoiseMap.Width / 50, radius, plantTolerance), 0.33f);
+            Bitmap res1 = btp.HeightsToStrictBitmap(myLittleNoiseMap.AverageNoiseMap(
+                myLittleNoiseMap.Width / 50, myLittleNoiseMap.Width / 50, radius, plantTolerance), 1f, 30);
             
             res1.Save(savepath+Path.GetFileNameWithoutExtension(path)+".png");
             Console.WriteLine("done processing \"" + Path.GetFileName(path) + "\"");
